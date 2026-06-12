@@ -1,0 +1,13 @@
+pyautogui>=0.9.54
+pydirectinput>=1.0.4; platform_system == "Windows"
+mss>=9.0.1
+Pillow>=10.0.0
+pyperclip>=1.8.2
+PyGetWindow>=0.0.9
+
+# Optional OCR. Install this if you want read_screen to understand Chinese well.
+# paddleocr>=2.7.0
+# paddlepaddle>=2.6.0
+
+# Optional lightweight OCR alternative. Requires the Tesseract app installed too.
+# pytesseract>=0.3.10

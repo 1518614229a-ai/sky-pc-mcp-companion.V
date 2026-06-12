@@ -1,0 +1,11 @@
+.venv/
+.venv-gpu/
+__pycache__/
+*.py[cod]
+*.log
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.tmp
+.DS_Store
