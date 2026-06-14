@@ -14,13 +14,41 @@
 
 ## 安装
 
-需要 Windows 和 Python 3.10 或更新版本。
+需要 Windows 和 Python 3.10 或更新版本。安装 Python 时建议勾选 “Add python.exe to PATH”。
+
+### 方式一：下载 ZIP（新手推荐）
+
+如果你之前没用过 Git，直接下载 ZIP 最简单：
+
+1. 打开 <https://github.com/Aevella/sky-pc-mcp-companion>
+2. 点绿色 `Code`
+3. 点 `Download ZIP`
+4. 解压到桌面或任意英文路径文件夹
+5. 进入解压后的 `sky-pc-mcp-companion` 文件夹
+6. 在文件夹空白处右键，选择“在终端中打开”或“Open in Terminal”
+7. 运行：
+
+```bat
+python -m pip install -r requirements.txt
+```
+
+如果提示 `python` 不是命令，说明 Python 没装好或没加 PATH。重新安装 Python，并勾选 “Add python.exe to PATH”。
+
+### 方式二：使用 Git
 
 ```bat
 git clone https://github.com/Aevella/sky-pc-mcp-companion.git
 cd sky-pc-mcp-companion
 python -m pip install -r requirements.txt
 ```
+
+如果提示：
+
+```text
+git 不是内部或外部命令 / 无法将 "git" 识别为 cmdlet
+```
+
+说明电脑没有安装 Git。可以改用上面的 ZIP 方式，或者安装 Git for Windows 后重新打开终端。
 
 第一次启用 PaddleOCR 时可能会下载模型，等待完成即可。
 
@@ -51,6 +79,19 @@ http://192.168.1.23:9800
 Authorization: Bearer 上面显示的Token
 ```
 
+如果你的客户端把请求头拆成两格来填：
+
+```text
+Header name:  Authorization
+Header value: Bearer 上面显示的Token
+```
+
+注意：
+
+- `Bearer` 后面有一个英文空格。
+- 不要加引号，不要换行，不要把 `Token:` 这个标签一起复制进去。
+- `start-http.bat` 每次启动时如果没有设置 `SKY_MCP_TOKEN`，都会生成一串新的 token。重启过窗口就要复制当前窗口里最新的那一串。
+
 在运行 MCP 的那台 Windows 电脑上打开命令行，输入：
 
 ```bat
@@ -72,6 +113,32 @@ http://192.168.1.23:9800
 ```
 
 手机和电脑必须连在同一个 Wi-Fi / 同一个局域网里。
+
+### 测试连接报 HTTP 401
+
+如果客户端提示类似：
+
+```text
+HTTP 401 {"error": "missing or invalid bearer token"}
+```
+
+这说明手机已经连到这台电脑的 MCP 了，网络地址和端口大概率是通的；失败点在鉴权头。
+
+按顺序检查：
+
+1. 电脑上的 `start-http.bat` 窗口还开着，并且没有重启过。
+2. 客户端里的 URL 是电脑局域网 IP，例如 `http://192.168.1.23:9800`，不是 `0.0.0.0`。
+3. 自定义请求头名字是 `Authorization`。
+4. 自定义请求头内容是 `Bearer 当前窗口显示的Token`。
+5. 如果刚刚关闭又重新打开过 `start-http.bat`，复制新的 token。
+
+也可以先在手机浏览器打开：
+
+```text
+http://电脑局域网IP:9800/health
+```
+
+如果能看到 `{"status":"ok"...}`，说明网络通；此时连接 MCP 仍然 401，就是 token 或请求头没有填对。
 
 ## 管理员模式
 
@@ -206,6 +273,32 @@ python sky-mcp-server.py --http --host 0.0.0.0 --port 9800 --token 你的token -
   }
 }
 ```
+
+## 能聚焦游戏，但不能输入文字
+
+如果 AI 客户端能把光遇窗口拉到前台，但发不出字，说明窗口识别和聚焦已经成功了，问题通常在“打开聊天框 / 剪贴板粘贴 / 模拟 Enter”这条输入链。
+
+先分开测：
+
+1. 让客户端调用 `open_chat`。如果只聚焦窗口但聊天框没打开，分别试 `backend: pydirectinput` 和 `backend: pyautogui`，并确认光遇窗口不是管理员权限而 MCP 普通权限。
+2. 手动在游戏里打开聊天输入框，再让客户端调用 `type_text`。如果这时能输入，说明问题在自动打开聊天框，不在粘贴。
+3. 如果手动打开聊天框后 `type_text` 也不能输入，优先检查管理员权限和输入后端。
+4. 如果光遇、Steam、启动器或游戏平台是管理员权限运行，`start-http.bat` 也要右键“以管理员身份运行”。
+5. 如果模型只调用了 `focus_game`，它只会聚焦窗口，不会输入文字。要让它调用 `send_chat`，或者在聊天框已打开时调用 `type_text`。
+
+推荐给 AI 客户端的测试顺序：
+
+```json
+{"name":"open_chat","arguments":{"backend":"pydirectinput"}}
+```
+
+聊天框打开后：
+
+```json
+{"name":"type_text","arguments":{"message":"hello","send":true,"backend":"pydirectinput"}}
+```
+
+如果不行，再把两个请求里的 `backend` 改成 `pyautogui` 试一次。
 
 ## 按键没反应
 
