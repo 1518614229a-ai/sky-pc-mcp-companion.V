@@ -910,11 +910,11 @@ def main() -> None:
     controller = PcSkyController(config)
     server = McpServer(controller)
 
-      try:
- from extensions import load_extensions
- load_extensions(server)
- except Exception as exc:
- log(f"Failed to load extensions: {exc}")
+    try:
+        from extensions import load_extensions
+        load_extensions(server)
+        except Exception as exc:
+        log(f"Failed to load extensions: {exc}")
 
     if args.http:
         run_http(server, config)
