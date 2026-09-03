@@ -913,7 +913,7 @@ def main() -> None:
     try:
         from extensions import load_extensions
         load_extensions(server)
-        except Exception as exc:
+    except Exception as exc:
         log(f"Failed to load extensions: {exc}")
 
     if args.http:
