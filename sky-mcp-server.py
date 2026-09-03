@@ -910,7 +910,7 @@ def main() -> None:
     controller = PcSkyController(config)
     server = McpServer(controller)
 
-     try:
+      try:
  from extensions import load_extensions
  load_extensions(server)
  except Exception as exc:
