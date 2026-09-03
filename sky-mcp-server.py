@@ -681,8 +681,28 @@ TOOLS = [
 class McpServer:
     def __init__(self, controller: PcSkyController):
         self.controller = controller
+         self._dynamic_tool_schemas = []
+ self._dynamic_tool_handlers = {}
+    def register_dynamic_tool(self, name: str, description: str,
+ input_schema: dict, handler) -> None:
+ self._dynamic_tool_schemas.append({
+ "name": name,
+ "description": description,
+ "inputSchema": input_schema,
+ })
+ self._dynamic_tool_handlers[name] = handler
+ log(f"Registered dynamic tool: {name}")
 
     def handle_tool_call(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+         if name in self._dynamic_tool_handlers:
+ result = self._dynamic_tool_handlers[name](arguments)
+ if isinstance(result, dict) and "content" in result:
+ return result
+ return {
+ "content": text_content(
+ json.dumps(result, ensure_ascii=False, indent=2)
+ )
+ }
         if name == "status":
             return {"content": text_content(json.dumps(self.controller.status(), ensure_ascii=False, indent=2))}
         if name == "focus_game":
@@ -746,7 +766,8 @@ class McpServer:
             if method == "notifications/initialized":
                 return None
             if method == "tools/list":
-                return {"jsonrpc": "2.0", "id": msg_id, "result": {"tools": TOOLS}}
+                 all_tools = TOOLS + self._dynamic_tool_schemas
+                return {"jsonrpc": "2.0", "id": msg_id, "result": {"tools": all_tools}}
             if method == "tools/call":
                 params = message.get("params") or {}
                 result = self.handle_tool_call(params.get("name", ""), params.get("arguments") or {})
